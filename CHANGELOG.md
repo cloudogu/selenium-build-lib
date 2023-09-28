@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.0.0](https://github.com/cloudogu/selenium-build-lib/releases/tag/v3.0.0) - 2023-09-28
+### Changed
+- Allow execution of selenium on rootless docker environments (#15)
+
+### Removed
+- Zalenium support because development of zalenium was stopped: https://github.com/zalando/zalenium
+
 ## [v2.1.1](https://github.com/cloudogu/zalenium-build-lib/releases/tag/v2.1.1) - 2021-03-17
 ### Fixed
 - waiting for the selenium grid does not fail instantly if the grid api isn't up already (#13)
