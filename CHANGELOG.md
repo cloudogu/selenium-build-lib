@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v3.0.0](https://github.com/cloudogu/selenium-build-lib/releases/tag/v3.0.0) - 2023-09-28
 ### Changed
 - Allow execution of selenium on rootless docker environments (#15)
 
