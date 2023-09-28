@@ -3,18 +3,18 @@
  * gracefully shutdown.
  *
  * @param config contains a map of settings that change the Selenium behavior. Can be a partial map or even left out.
- *      The defaults are:
- *      [seleniumHubImage : 'selenium/hub',
- *      seleniumVersion   : '3.141.59-zinc',
- *      workerImageFF     : "selenium/node-firefox",
- *      workerImageChrome : "selenium/node-chrome",
- *      firefoxWorkerCount: 0,
- *      chromeWorkerCount : 0,
- *      hubPortMapping    : 4444
- *      debugSelenium     : false]
+ *   The defaults are:
+ *   [seleniumHubImage : 'selenium/hub',
+ *   seleniumVersion  : '3.141.59-zinc',
+ *   workerImageFF   : "selenium/node-firefox",
+ *   workerImageChrome : "selenium/node-chrome",
+ *   firefoxWorkerCount: 0,
+ *   chromeWorkerCount : 0,
+ *   hubPortMapping  : 4444
+ *   debugSelenium   : false]
  * @param seleniumNetwork The Selenium grid container and its nodes will be added to this docker network. This is useful if other containers
- *      must communicate with Selenium while being in a docker network. If empty or left out, Selenium grid and nodes will stay in the
- *      default network.
+ *   must communicate with Selenium while being in a docker network. If empty or left out, Selenium grid and nodes will stay in the
+ *   default network.
  * @param closure the body
  */
 void call(Map config = [:], String seleniumNetwork, Closure closure) {
@@ -31,7 +31,7 @@ void call(Map config = [:], String seleniumNetwork, Closure closure) {
     ]
 
     def networkExists = checkNetwork(seleniumNetwork)
-    if(!networkExists) {
+    if (!networkExists) {
         throw new ConfigurationException("the given network '${seleniumNetwork}' does not exist but is mandatory when using selenium grid")
     }
 
@@ -57,7 +57,7 @@ void call(Map config = [:], String seleniumNetwork, Closure closure) {
     // will persist the image in the registry better than an docker.image(...).runWith()
     def seleniumHubImage = docker.image("${config.seleniumHubImage}:${config.seleniumVersion}")
     seleniumHubImage.pull()
-    // Run with Jenkins user, so the files created in the workspace by selenium can be deleted later
+    // Run with Jenkins user in rootless case, so the files created in the workspace by selenium can be deleted later
     // Otherwise that would be root, and you know how hard it is to get rid of root-owned files.
     def dockerArgs = "-u ${uid}:${gid} ${networkParameter} ${gridDebugParameter} -p ${config.hubPortMapping}:4444 --name ${hubName}"
     seleniumHubImage.withRun(dockerArgs) { hubContainer ->
@@ -67,7 +67,7 @@ void call(Map config = [:], String seleniumNetwork, Closure closure) {
         def chromeContainers = runWorkerNodes("${config.workerImageChrome}:${config.seleniumVersion}", networkParameter, gridDebugParameter, seleniumIp, config.chromeWorkerCount)
 
         try {
-            def seleniumHubHost = "${seleniumIp}:${config.hubPortMapping}"
+            def seleniumHubHost = "localhost:${config.hubPortMapping}"
             waitForSeleniumToGetReady(seleniumHubHost)
 
             closure.call(hubContainer, seleniumIp, uid, gid)
@@ -84,15 +84,25 @@ String findContainerIp(container) {
 }
 
 String findUid() {
-    sh(returnStdout: true,
+    isRootless()
+            ? 0
+            : sh(returnStdout: true,
             script: 'id -u')
             .trim()
 }
 
 String findGid() {
-    sh(returnStdout: true,
+    isRootless()
+            ? 0
+            : sh(returnStdout: true,
             script: 'id -g')
             .trim()
+}
+
+Boolean isRootless() {
+    sh(returnStatus: true,
+            script: "docker info -f '{{.SecurityOptions}}' | grep 'name=rootless'",
+    ) == 0
 }
 
 void waitForSeleniumToGetReady(String host) {
